@@ -1,5 +1,6 @@
 import { ForestStats } from "../domain/shared/IForest";
 import { getEl } from "./dom";
+import { ForestMode } from "./controls";
 
 /** Calcula los FPS promediando cada 500 ms. */
 export class FpsMeter {
@@ -27,6 +28,7 @@ export interface MetricsData {
   readonly fps: number;
   readonly creationMs: number;
   readonly maxTrees: number;
+  readonly mode: ForestMode;
 }
 
 export class MetricsPanel {
@@ -38,17 +40,22 @@ export class MetricsPanel {
   private readonly fpsEl = getEl<HTMLElement>("m-fps");
   private readonly warning = getEl<HTMLElement>("warning");
 
-  public update({ stats, fps, creationMs, maxTrees }: MetricsData): void {
+    public update({ stats, fps, creationMs, maxTrees, mode }: MetricsData): void {
     const fmt = (n: number): string => n.toLocaleString("es");
 
     this.trees.textContent = fmt(stats.treeCount);
     this.resources.textContent = fmt(stats.resourceSets);
     this.buffers.textContent = fmt(stats.bufferCount);
-    this.memory.textContent = `${(stats.totalBytes / 1024 / 1024).toFixed(1)} MB`;
+    this.memory.textContent = `${(stats.totalBytes / 1024 / 1024).toFixed(2)} MB`;
     this.time.textContent = `${fmt(Math.round(creationMs))} ms`;
     this.fpsEl.textContent = fps.toFixed(0);
 
-    if (stats.treeCount >= maxTrees) {
+    if (mode === "flyweight") {
+      this.warning.textContent =
+        stats.treeCount > 0
+          ? `✅ ${fmt(stats.treeCount)} árboles comparten ${stats.resourceSets} conjunto(s) de recursos.`
+          : "";
+    } else if (stats.treeCount >= maxTrees) {
       this.warning.textContent = `🛑 Tope de ${fmt(maxTrees)} árboles alcanzado: cada uno carga sus propios buffers.`;
     } else if (stats.treeCount >= maxTrees * 0.8) {
       this.warning.textContent = "⚠️ Cerca del tope: el consumo de memoria es muy alto.";

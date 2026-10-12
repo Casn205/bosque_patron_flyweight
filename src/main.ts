@@ -1,8 +1,9 @@
 import { IForest } from "./domain/shared/IForest";
 import { SPECIES_CONFIG, SPECIES_LIST } from "./domain/shared/Species";
 import { DebtForest } from "./domain/debt/DebtForest";
+import { FlyweightForest } from "./domain/flyweight/FlyweightForest";
 import { Renderer } from "./ui/renderer";
-import { Controls } from "./ui/controls";
+import { Controls, ForestMode } from "./ui/controls";
 import { FpsMeter, MetricsPanel } from "./ui/metricsPanel";
 import { getEl } from "./ui/dom";
 
@@ -11,8 +12,15 @@ const MAX_TREES = 5000;
 /** Tiempo máximo por frame dedicado a plantar, para no congelar la página. */
 const FRAME_BUDGET_MS = 12;
 
-// La UI solo conoce IForest: en la entrega 3 se cambiará la implementación.
-const forest: IForest = new DebtForest(WORLD_SIZE);
+/** Única línea que conoce las implementaciones concretas. */
+function createForest(mode: ForestMode): IForest {
+  return mode === "debt"
+    ? new DebtForest(WORLD_SIZE)
+    : new FlyweightForest(WORLD_SIZE);
+}
+
+let mode: ForestMode = "debt";
+let forest: IForest = createForest(mode);
 
 const renderer = new Renderer(getEl<HTMLCanvasElement>("forest-canvas"), WORLD_SIZE);
 const metrics = new MetricsPanel();
@@ -27,6 +35,7 @@ let creationMs = 0; // tiempo acumulado dentro de forest.plant()
 const controls = new Controls({
   onPlant: requestPlant,
   onClear: clearForest,
+  onModeChange: changeMode,
 });
 
 function requestPlant(count: number): void {
@@ -47,6 +56,23 @@ function clearForest(): void {
   forest.clear();
   controls.hideProgress();
   controls.setBusy(false);
+}
+
+/**
+ * Cambia de implementación y vuelve a plantar la misma cantidad de árboles,
+ * para que las métricas de ambos modos sean comparables.
+ */
+function changeMode(next: ForestMode): void {
+  if (next === mode) return;
+
+  const count = forest.trees.length + pending;
+  clearForest(); // libera el bosque anterior y reinicia el contador de bytes
+
+  mode = next;
+  forest = createForest(mode);
+  controls.setMode(mode);
+
+  if (count > 0) requestPlant(count);
 }
 
 /** Planta árboles de uno en uno hasta agotar el presupuesto de tiempo del frame. */
@@ -79,6 +105,7 @@ function frame(now: number): void {
     fps: fps.fps,
     creationMs,
     maxTrees: MAX_TREES,
+    mode,
   });
 
   requestAnimationFrame(frame);
@@ -97,4 +124,5 @@ function buildLegend(): void {
 
 window.addEventListener("resize", () => renderer.resize());
 buildLegend();
+controls.setMode(mode);
 requestAnimationFrame(frame);

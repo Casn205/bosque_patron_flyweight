@@ -1,11 +1,14 @@
 import { getEl } from "./dom";
 
+export type ForestMode = "debt" | "flyweight";
+
 export interface ControlsHandlers {
   onPlant(count: number): void;
   onClear(): void;
+  onModeChange(mode: ForestMode): void;
 }
 
-/** Slider, botones de plantar/vaciar y barra de progreso. */
+/** Selector de modo, slider, botones de plantar/vaciar y barra de progreso. */
 export class Controls {
   private readonly slider = getEl<HTMLInputElement>("amount-slider");
   private readonly label = getEl<HTMLElement>("amount-label");
@@ -14,6 +17,10 @@ export class Controls {
   private readonly presetBtns = Array.from(
     document.querySelectorAll<HTMLButtonElement>("button.preset")
   );
+  private readonly modeBtns = Array.from(
+    document.querySelectorAll<HTMLButtonElement>("button.mode-btn")
+  );
+  private readonly badge = getEl<HTMLElement>("mode-badge");
   private readonly progress = getEl<HTMLElement>("progress");
   private readonly progressBar = getEl<HTMLElement>("progress-bar");
   private readonly progressText = getEl<HTMLElement>("progress-text");
@@ -34,9 +41,27 @@ export class Controls {
         handlers.onPlant(Number(btn.dataset.amount))
       );
     }
+
+    for (const btn of this.modeBtns) {
+      btn.addEventListener("click", () =>
+        handlers.onModeChange(btn.dataset.mode as ForestMode)
+      );
+    }
   }
 
-  /** Mientras se planta, se bloquean los botones de plantar (Vaciar sigue activo). */
+  /** Marca el botón activo y actualiza la insignia del encabezado. */
+  public setMode(mode: ForestMode): void {
+    for (const btn of this.modeBtns) {
+      btn.classList.toggle("active", btn.dataset.mode === mode);
+    }
+    const isFly = mode === "flyweight";
+    this.badge.textContent = isFly
+      ? "Modo: con Flyweight"
+      : "Modo: sin Flyweight (deuda técnica)";
+    this.badge.classList.toggle("fly", isFly);
+  }
+
+  /** Mientras se planta, se bloquean los botones de plantar (Vaciar y Modo siguen activos). */
   public setBusy(busy: boolean): void {
     this.plantBtn.disabled = busy;
     for (const btn of this.presetBtns) btn.disabled = busy;

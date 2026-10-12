@@ -77,12 +77,16 @@
       dt { color: #9fb3c8; }
       dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
       #warning { min-height: 1.2em; margin: 12px 0 0; font-size: 0.85rem; color: #ffb86b; }
+            .badge.fly { background: #1d4d2e; color: #9be9a8; }
+      .mode { display: flex; gap: 8px; }
+      button.mode-btn { background: #3a4656; font-weight: 500; }
+      button.mode-btn.active { background: #2f81f7; font-weight: 700; }
     </style>
   </head>
   <body>
     <header>
       <h1>🌲 Bosque Flyweight</h1>
-      <span class="badge">Modo: sin Flyweight (deuda técnica)</span>
+        <span class="badge" id="mode-badge">Modo: sin Flyweight (deuda técnica)</span>
     </header>
 
     <main>
@@ -92,6 +96,11 @@
       </section>
 
       <aside class="panel">
+        <h2>Modo</h2>
+        <div class="mode">
+          <button class="mode-btn active" data-mode="debt">Sin Flyweight</button>
+          <button class="mode-btn" data-mode="flyweight">Con Flyweight</button>
+        </div>
         <h2>Controles</h2>
         <label for="amount-slider">
           Cantidad a plantar: <strong id="amount-label">500</strong>
