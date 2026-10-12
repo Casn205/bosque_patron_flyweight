@@ -1,0 +1,19 @@
+# Dependencias
+node_modules/
+
+# Salida de build
+dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Variables de entorno
+.env
+.env.*
+
+# Editor / sistema operativo
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
